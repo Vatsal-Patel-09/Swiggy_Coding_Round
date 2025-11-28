@@ -2,6 +2,7 @@
 Prompt templates for AI story generation.
 
 Contains carefully crafted prompts for different generation tasks.
+Third-person narrative style for immersive storytelling.
 """
 
 from typing import Dict
@@ -21,19 +22,27 @@ class PromptTemplates:
         Returns:
             str: Formatted prompt for AI
         """
-        return f"""You are a creative storytelling AI. Create an engaging opening scene for an interactive story.
+        return f"""You are a master storyteller crafting an engaging comic book narrative. Create a captivating opening scene.
 
-User's Story Prompt: {user_prompt}
+Story Concept: {user_prompt}
 
-Instructions:
-1. Write a brief, engaging opening scene (3-5 sentences max)
-2. Set the atmosphere and introduce the situation concisely
-3. End at a decision point where the reader must make a choice
-4. Make it vivid but concise
-5. Use present tense for immediacy
-6. Don't include any choices in the scene text itself
+NARRATIVE STYLE:
+- Write in THIRD PERSON perspective (he/she/they, character names)
+- The reader is an OBSERVER watching the story unfold, NOT a character in it
+- Focus on what the CHARACTERS do, feel, and experience
+- Create vivid, cinematic moments perfect for comic panels
 
-Write ONLY the scene narrative in 3-5 sentences. Do not include choices, options, or meta-commentary."""
+STORYTELLING GUIDELINES:
+1. Open with a hook that grabs attention immediately
+2. Introduce the protagonist(s) through action or compelling situation
+3. Set the atmosphere with sensory details (sights, sounds, mood)
+4. Build intrigue - hint at conflict or mystery
+5. End at a dramatic moment where the story could branch two ways
+6. Keep it to 3-5 punchy sentences - every word counts!
+7. Use present tense for immediacy ("She runs..." not "She ran...")
+
+Write ONLY the scene narrative. No choices, no questions to reader, no meta-commentary.
+Make it visual, dramatic, and impossible to look away from!"""
     
     @staticmethod
     def get_continuation_prompt(story_context: str, selected_choice: str) -> str:
@@ -47,22 +56,30 @@ Write ONLY the scene narrative in 3-5 sentences. Do not include choices, options
         Returns:
             str: Formatted prompt for AI
         """
-        return f"""You are continuing an interactive story. Write the next scene based on the user's choice.
+        return f"""You are continuing an epic comic book narrative. The reader has chosen what happens next.
 
 {story_context}
 
-The user chose: "{selected_choice}"
+WHAT HAPPENS NEXT: "{selected_choice}"
 
-Instructions:
-1. Write the next scene (3-5 sentences max) that follows naturally from the choice
-2. Show the consequences and developments from the decision
-3. Maintain consistency with previous events
-4. End at another decision point
-5. Use vivid, descriptive language but keep it concise
-6. Keep the tension and engagement high
-7. Use present tense
+NARRATIVE STYLE:
+- Write in THIRD PERSON perspective (he/she/they, character names)
+- The reader OBSERVES the story - they are NOT a character in it
+- Show the consequences of the chosen direction unfolding
+- Create vivid, cinematic moments perfect for comic panels
 
-Write ONLY the scene narrative in 3-5 sentences. Do not include choices, options, or meta-commentary."""
+STORYTELLING GUIDELINES:
+1. Seamlessly continue from the chosen direction
+2. Show immediate consequences and new developments
+3. Maintain character consistency and story logic
+4. Raise the stakes or deepen the intrigue
+5. Add a twist, revelation, or escalation to keep readers hooked
+6. End at another dramatic branching point
+7. Keep it to 3-5 impactful sentences
+8. Use present tense ("He discovers..." not "He discovered...")
+
+Write ONLY the scene narrative. No choices, no questions, no meta-commentary.
+Make every panel count - drama, emotion, action!"""
     
     @staticmethod
     def get_choices_prompt(scene_content: str, story_context: str) -> str:
@@ -76,27 +93,37 @@ Write ONLY the scene narrative in 3-5 sentences. Do not include choices, options
         Returns:
             str: Formatted prompt for AI
         """
-        return f"""You are creating choices for an interactive story. Generate exactly 2 distinct, interesting options.
+        return f"""You are creating story branches for a comic narrative. Generate 2 exciting directions the story could take.
 
-Story Context:
+Story So Far:
 {story_context}
 
 Current Scene:
 {scene_content}
 
-Instructions:
-1. Create exactly 2 different choices
-2. Each choice should be 8-15 words
-3. Make choices meaningful and lead to different outcomes
-4. Choices should be action-oriented
-5. Make both options interesting (avoid obvious good/bad choices)
-6. Choices should feel natural to the situation
+IMPORTANT - These are STORY DIRECTIONS, not reader actions:
+- Describe what HAPPENS NEXT in the story (third person)
+- Focus on plot developments, character actions, or events
+- NOT "You decide to..." but rather "The hero chooses to..." or "Suddenly..."
+
+GUIDELINES:
+1. Create exactly 2 different story directions
+2. Each should be 8-15 words describing what happens
+3. Both paths should be genuinely interesting (no obvious good/bad)
+4. They should lead to meaningfully different story outcomes
+5. Make them dramatic, intriguing, or surprising
+6. Use action verbs and vivid language
+
+EXAMPLES OF GOOD CHOICES:
+- "The detective follows the mysterious figure into the abandoned warehouse"
+- "A sudden explosion rocks the building, trapping everyone inside"
+- "She reveals her true identity to the shocked crowd"
 
 Format your response EXACTLY as:
-CHOICE_1: [first choice text here]
-CHOICE_2: [second choice text here]
+CHOICE_1: [what happens in direction 1]
+CHOICE_2: [what happens in direction 2]
 
-Do not add any other text, explanations, or formatting."""
+No other text or explanations."""
     
     @staticmethod
     def get_story_ending_prompt(story_context: str, selected_choice: str) -> str:
@@ -110,23 +137,28 @@ Do not add any other text, explanations, or formatting."""
         Returns:
             str: Formatted prompt for AI
         """
-        return f"""You are concluding an interactive story. Write a satisfying ending scene.
+        return f"""You are crafting the epic conclusion to a comic book narrative. Make it unforgettable.
 
 {story_context}
 
-The user's final choice: "{selected_choice}"
+FINAL DIRECTION: "{selected_choice}"
 
-Instructions:
-1. Write a conclusive scene (4-6 sentences max)
-2. Resolve the main story threads
-3. Provide a satisfying emotional payoff
-4. Reference key moments from the journey briefly
-5. Use vivid, impactful language but keep it concise
-6. Make it memorable
-7. Use present tense
+NARRATIVE STYLE:
+- Write in THIRD PERSON perspective
+- The reader observes the grand finale unfold
+- Create a powerful, cinematic conclusion
 
-This is the final scene - do not end with a cliffhanger or new choices.
-Write ONLY the ending scene narrative in 4-6 sentences."""
+STORYTELLING GUIDELINES:
+1. Resolve the main conflict with emotional impact
+2. Give the protagonist(s) a defining moment
+3. Tie up story threads satisfyingly
+4. Deliver an emotional payoff - triumph, sacrifice, revelation, or transformation
+5. End with a memorable final image or moment
+6. Keep it to 4-6 powerful sentences
+7. Use present tense for immediacy
+
+This is THE END - no cliffhangers, no new questions.
+Write ONLY the finale. Make readers feel something!"""
 
 
 class PromptFormatter:
