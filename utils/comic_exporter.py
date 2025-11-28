@@ -124,8 +124,8 @@ class ComicPDFExporter:
             # Add ending page
             self._add_end_page(pdf)
             
-            # Output to bytes
-            return pdf.output()
+            # Output to bytes (convert bytearray to bytes for Streamlit compatibility)
+            return bytes(pdf.output())
             
         except Exception as e:
             print(f"⚠ PDF export failed: {e}")
