@@ -54,3 +54,5 @@ htmlcov/
 # Project specific
 test_models.py
 requrinments.txt
+
+generated_images/
