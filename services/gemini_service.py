@@ -144,6 +144,70 @@ class GeminiService:
             print(f"✗ {error_msg}")
             raise Exception(error_msg)
     
+    def generate_panel_breakdown(
+        self, 
+        scene_content: str, 
+        num_panels: int = 4
+    ) -> list[dict]:
+        """
+        Generate a panel-by-panel breakdown of a scene for comic visualization.
+        
+        Args:
+            scene_content: The scene narrative to break down
+            num_panels: Number of panels to create (3-5 recommended)
+            
+        Returns:
+            list[dict]: List of panel descriptions with visual, action, camera, emotion, dialogue
+            
+        Raises:
+            Exception: If panel breakdown cannot be generated or parsed
+        """
+        try:
+            from utils.prompt_templates import PromptTemplates, PromptFormatter
+            
+            # Get the prompt for panel breakdown
+            prompt = PromptTemplates.get_panel_breakdown_prompt(scene_content, num_panels)
+            
+            # Generate the breakdown
+            response = self.generate_text(prompt)
+            
+            # Parse the panels
+            panels = PromptFormatter.extract_panel_breakdown(response)
+            
+            # Validate we got reasonable panels
+            if len(panels) < 2:
+                raise ValueError(f"Expected {num_panels} panels, got {len(panels)}")
+            
+            print(f"✓ Generated {len(panels)} panel breakdown")
+            return panels
+            
+        except Exception as e:
+            error_msg = f"Failed to generate panel breakdown: {str(e)}"
+            print(f"✗ {error_msg}")
+            raise Exception(error_msg)
+    
+    def generate_scene_title(self, scene_content: str) -> str:
+        """
+        Generate a short catchy title for a scene.
+        
+        Args:
+            scene_content: The scene narrative
+            
+        Returns:
+            str: Short scene title
+        """
+        try:
+            from utils.prompt_templates import PromptTemplates, PromptFormatter
+            
+            prompt = PromptTemplates.get_scene_title_prompt(scene_content)
+            response = self.generate_text(prompt, max_retries=2)
+            
+            return PromptFormatter.extract_scene_title(response)
+            
+        except Exception as e:
+            print(f"⚠ Could not generate scene title: {e}")
+            return "The Story Continues"
+    
     def health_check(self) -> bool:
         """
         Check if the Gemini service is working properly.

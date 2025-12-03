@@ -596,16 +596,25 @@ def handle_story_start(prompt: str) -> None:
         # Get settings from session state
         comic_mode = st.session_state.get('comic_mode', True)
         art_style = st.session_state.get('art_style', 'western_comic')
+        page_mode = st.session_state.get('page_mode', False)
+        num_panels = st.session_state.get('num_panels', 4)
         
-        with st.spinner("💥 CREATING YOUR COMIC... KAPOW!"):
+        # Dynamic spinner message based on mode
+        spinner_msg = "📖 CREATING YOUR COMIC PAGE... KAPOW!" if page_mode else "💥 CREATING YOUR COMIC... KAPOW!"
+        
+        with st.spinner(spinner_msg):
             from services.story_service import StoryService
             story_service = StoryService(
                 generate_images=comic_mode,
-                art_style=art_style
+                art_style=art_style,
+                page_mode=page_mode,
+                num_panels=num_panels
             )
             story = story_service.start_new_story(prompt)
             SessionManager.set_story(story)
-            SessionManager.set_success("💥 BOOM! Your comic panel is ready!")
+            
+            success_msg = "📖 BOOM! Your comic page is ready!" if page_mode else "💥 BOOM! Your comic panel is ready!"
+            SessionManager.set_success(success_msg)
         
     except Exception as e:
         SessionManager.set_error(f"Failed to start story: {str(e)}")
@@ -633,12 +642,19 @@ def handle_choice_selection(choice_id: int) -> None:
         # Get settings from session state
         comic_mode = st.session_state.get('comic_mode', True)
         art_style = st.session_state.get('art_style', 'western_comic')
+        page_mode = st.session_state.get('page_mode', False)
+        num_panels = st.session_state.get('num_panels', 4)
         
-        with st.spinner("⚡ CREATING NEXT PANEL... ZAP!"):
+        # Dynamic spinner message based on mode
+        spinner_msg = "📖 CREATING NEXT PAGE... ZAP!" if page_mode else "⚡ CREATING NEXT PANEL... ZAP!"
+        
+        with st.spinner(spinner_msg):
             from services.story_service import StoryService
             story_service = StoryService(
                 generate_images=comic_mode,
-                art_style=art_style
+                art_style=art_style,
+                page_mode=page_mode,
+                num_panels=num_panels
             )
             next_scene = story_service.continue_story(story, choice_id)
             
@@ -646,7 +662,8 @@ def handle_choice_selection(choice_id: int) -> None:
             if not next_scene.choices:
                 SessionManager.set_success("🎬 THE END! Export your comic as PDF!")
             else:
-                SessionManager.set_success("💥 WHAM! New panel created!")
+                success_msg = "📖 WHAM! New page created!" if page_mode else "💥 WHAM! New panel created!"
+                SessionManager.set_success(success_msg)
         
     except Exception as e:
         SessionManager.set_error(f"Failed to continue story: {str(e)}")
@@ -868,12 +885,72 @@ def _render_art_style_selector() -> None:
     
     # Comic mode toggle
     comic_mode = st.sidebar.checkbox(
-        "🖼️ Enable Comic Panels",
+        "🖼️ Enable Comic Images",
         value=st.session_state.get('comic_mode', True),
         key="comic_mode_check",
-        help="When enabled, each scene will have an AI-generated comic panel image"
+        help="When enabled, each scene will have an AI-generated comic image"
     )
     st.session_state.comic_mode = comic_mode
+    
+    # Page Mode vs Panel Mode toggle (only show if comic mode is enabled)
+    if comic_mode:
+        st.sidebar.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+        
+        st.sidebar.markdown("""
+        <p style="
+            font-family: 'Bangers', cursive;
+            color: #ffeb3b;
+            text-shadow: 2px 2px 0px #000;
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+        ">📄 GENERATION MODE</p>
+        """, unsafe_allow_html=True)
+        
+        page_mode = st.sidebar.radio(
+            "Choose generation mode:",
+            options=["panel", "page"],
+            format_func=lambda x: {
+                "panel": "🎯 Panel Mode (1 image per scene)",
+                "page": "📖 Page Mode (multi-panel comic page)"
+            }.get(x, x),
+            index=0 if not st.session_state.get('page_mode', False) else 1,
+            key="page_mode_radio",
+            label_visibility="collapsed",
+            help="Panel Mode: Single image per scene. Page Mode: Full comic page with multiple panels."
+        )
+        st.session_state.page_mode = (page_mode == "page")
+        
+        # Number of panels selector (only in page mode)
+        if st.session_state.page_mode:
+            st.sidebar.markdown("<div style='height: 5px;'></div>", unsafe_allow_html=True)
+            num_panels = st.sidebar.slider(
+                "Panels per page:",
+                min_value=3,
+                max_value=5,
+                value=st.session_state.get('num_panels', 4),
+                key="num_panels_slider",
+                help="Number of comic panels per page (3-5)"
+            )
+            st.session_state.num_panels = num_panels
+            
+            st.sidebar.markdown(f"""
+            <div style="
+                background: rgba(76, 175, 80, 0.3);
+                border: 2px solid rgba(76, 175, 80, 0.7);
+                border-radius: 8px;
+                padding: 8px;
+                margin-top: 8px;
+            ">
+                <p style="
+                    font-size: 0.8rem;
+                    color: #fff;
+                    font-family: 'Comic Neue', sans-serif;
+                    margin: 0;
+                ">✨ Page Mode generates full comic pages with {num_panels} panels showing the scene progression!</p>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.session_state.num_panels = 4  # Default
 
 
 def _render_about_section() -> None:

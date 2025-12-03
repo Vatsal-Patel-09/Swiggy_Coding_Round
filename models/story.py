@@ -36,9 +36,14 @@ class Scene(BaseModel):
     selected_choice_id: Optional[int] = Field(None, description="ID of the choice user selected")
     timestamp: datetime = Field(default_factory=datetime.now, description="When the scene was created")
     
-    # Comic panel fields
+    # Comic panel fields (Panel Mode - single image per scene)
     image_path: Optional[str] = Field(None, description="Path to generated comic panel image")
     image_prompt: Optional[str] = Field(None, description="Prompt used to generate the image")
+    
+    # Comic page fields (Page Mode - multi-panel comic page)
+    panel_breakdown: Optional[List[dict]] = Field(None, description="Panel-by-panel breakdown for page mode")
+    scene_title: Optional[str] = Field(None, description="Short title for the scene/page")
+    is_page_mode: bool = Field(False, description="Whether this scene uses page mode (multi-panel)")
     
     class Config:
         """Pydantic configuration."""
@@ -52,7 +57,10 @@ class Scene(BaseModel):
                 ],
                 "selected_choice_id": None,
                 "image_path": "/path/to/comic_panel.png",
-                "image_prompt": "Comic panel of hero at forest edge..."
+                "image_prompt": "Comic panel of hero at forest edge...",
+                "panel_breakdown": None,
+                "scene_title": "The Dark Forest",
+                "is_page_mode": False
             }
         }
     

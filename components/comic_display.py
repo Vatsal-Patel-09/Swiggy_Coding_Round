@@ -28,21 +28,47 @@ def display_comic_panel(scene: Scene, scene_number: int) -> None:
         scene: The scene to display
         scene_number: The scene number
     """
-    # Panel header with comic styling
-    st.markdown(f"""
-    <div style="
-        display: inline-block;
-        background: linear-gradient(135deg, #ff5252 0%, #d32f2f 100%);
-        color: #fff;
-        padding: 8px 20px;
-        border: 3px solid #000;
-        border-radius: 5px;
-        font-family: 'Bangers', cursive;
-        font-size: 1.3rem;
-        box-shadow: 3px 3px 0px #000;
-        margin-bottom: 10px;
-    ">📖 PANEL {scene_number}</div>
-    """, unsafe_allow_html=True)
+    # Check if this is a page mode scene (multi-panel)
+    is_page_mode = getattr(scene, 'is_page_mode', False)
+    scene_title = getattr(scene, 'scene_title', None)
+    
+    # Panel/Page header with comic styling
+    if is_page_mode:
+        # Page mode header with title
+        header_text = f"📖 PAGE {scene_number}"
+        if scene_title:
+            header_text += f": {scene_title.upper()}"
+        
+        st.markdown(f"""
+        <div style="
+            display: inline-block;
+            background: linear-gradient(135deg, #9c27b0 0%, #673ab7 100%);
+            color: #fff;
+            padding: 10px 25px;
+            border: 3px solid #000;
+            border-radius: 5px;
+            font-family: 'Bangers', cursive;
+            font-size: 1.4rem;
+            box-shadow: 3px 3px 0px #000;
+            margin-bottom: 10px;
+        ">{header_text}</div>
+        """, unsafe_allow_html=True)
+    else:
+        # Panel mode header
+        st.markdown(f"""
+        <div style="
+            display: inline-block;
+            background: linear-gradient(135deg, #ff5252 0%, #d32f2f 100%);
+            color: #fff;
+            padding: 8px 20px;
+            border: 3px solid #000;
+            border-radius: 5px;
+            font-family: 'Bangers', cursive;
+            font-size: 1.3rem;
+            box-shadow: 3px 3px 0px #000;
+            margin-bottom: 10px;
+        ">📖 PANEL {scene_number}</div>
+        """, unsafe_allow_html=True)
     
     # Display the comic panel image if available
     if scene.image_path and Path(scene.image_path).exists():
@@ -76,11 +102,12 @@ def display_comic_panel(scene: Scene, scene_number: int) -> None:
             </div>
             """, unsafe_allow_html=True)
         else:
-            st.image(scene.image_path, width="stretch", caption=None)
+            st.image(scene.image_path, use_container_width=True, caption=None)
     else:
         # Placeholder if no image - comic style
+        placeholder_text = "GENERATING COMIC PAGE..." if is_page_mode else "GENERATING ARTWORK..."
         st.markdown(
-            """
+            f"""
             <div style="
                 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                 height: 300px;
@@ -104,13 +131,13 @@ def display_comic_panel(scene: Scene, scene_number: int) -> None:
                     font-size: 1.5rem;
                     margin-top: 10px;
                     text-shadow: 2px 2px 0px #000;
-                ">GENERATING ARTWORK...</span>
+                ">{placeholder_text}</span>
             </div>
             <style>
-                @keyframes pulse {
-                    0%, 100% { transform: scale(1); }
-                    50% { transform: scale(1.1); }
-                }
+                @keyframes pulse {{{{
+                    0%, 100% {{{{ transform: scale(1); }}}}
+                    50% {{{{ transform: scale(1.1); }}}}
+                }}}}
             </style>
             """,
             unsafe_allow_html=True
@@ -170,8 +197,16 @@ def display_comic_panel_ending(scene: Scene, scene_number: int) -> None:
         scene: The ending scene
         scene_number: The scene number
     """
+    # Check if this is a page mode scene
+    is_page_mode = getattr(scene, 'is_page_mode', False)
+    scene_title = getattr(scene, 'scene_title', 'The End')
+    
     # Ending header with dramatic styling
-    st.markdown("""
+    header_text = "🎬 FINAL PAGE 🎬" if is_page_mode else "🎬 FINAL PANEL 🎬"
+    if scene_title and scene_title != "The End":
+        header_text = f"🎬 {scene_title.upper()} 🎬"
+    
+    st.markdown(f"""
     <div style="
         text-align: center;
         margin: 20px 0;
@@ -187,7 +222,7 @@ def display_comic_panel_ending(scene: Scene, scene_number: int) -> None:
             font-size: 1.8rem;
             box-shadow: 5px 5px 0px #000;
             text-shadow: 1px 1px 0px #fff;
-        ">🎬 FINAL PANEL 🎬</span>
+        ">{header_text}</span>
     </div>
     """, unsafe_allow_html=True)
     

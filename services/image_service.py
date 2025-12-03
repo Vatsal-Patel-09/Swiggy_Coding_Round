@@ -86,29 +86,68 @@ class ImageService:
             str: Formatted prompt for image generation
         """
         style_instructions = {
-            "western_comic": "Marvel/DC comic book style, bold outlines, dynamic composition, cel-shading, vibrant colors",
-            "manga": "Japanese manga style, expressive characters, speed lines, black and white with screentones",
-            "cartoon": "Animated cartoon style, bright colors, exaggerated expressions, clean lines",
-            "realistic": "Semi-realistic comic art, detailed shading, dramatic lighting"
+            "western_comic": (
+                "rendered in American comic book style with bold black ink outlines, "
+                "dynamic action poses, cel-shading with vibrant saturated colors, "
+                "dramatic shadows, and heroic proportions like Marvel or DC comics"
+            ),
+            "manga": (
+                "rendered in Japanese manga style with expressive large eyes, "
+                "speed lines for motion, screentone shading patterns, emotional expressions, "
+                "black and white with gray tones, dynamic panel energy"
+            ),
+            "cartoon": (
+                "rendered in modern animated cartoon style with bright cheerful colors, "
+                "rounded friendly shapes, exaggerated fun expressions, clean bold outlines, "
+                "playful and energetic like Pixar or Disney animation"
+            ),
+            "graphic_novel": (
+                "rendered in graphic novel style with realistic proportions, "
+                "moody atmospheric lighting, muted sophisticated color palette, "
+                "detailed textured backgrounds, cinematic noir composition"
+            ),
+            "retro_comic": (
+                "rendered in vintage 1960s comic book style with visible halftone dot patterns, "
+                "limited primary color palette (red, blue, yellow), classic bold outlines, "
+                "nostalgic silver age aesthetic with slightly faded colors"
+            ),
+            "watercolor": (
+                "rendered in poetic watercolor-ink illustration style with fine delicate ink outlines, "
+                "soft bleeding watercolor washes, visible paper grain texture, "
+                "muted greys and blues with occasional vivid color accents, expressive brushwork"
+            )
         }
         
         style_desc = style_instructions.get(style, style_instructions["western_comic"])
         
-        prompt = f"""Create a single comic book panel illustration:
+        # Extract key visual elements from the scene
+        prompt = f"""Create a stunning single comic book panel illustration, {style_desc}.
 
-SCENE: {scene_description}
+SCENE TO ILLUSTRATE:
+{scene_description}
 
-ART STYLE: {style_desc}
+VISUAL REQUIREMENTS:
+- Capture the KEY DRAMATIC MOMENT from the scene
+- Show clear character poses and expressions that convey emotion
+- Use dynamic camera angle (low angle for power, high angle for vulnerability, dutch angle for tension)
+- Include relevant environment/background details mentioned in the scene
+- Dramatic lighting that enhances the mood (rim lighting, shadows, highlights)
+- Professional comic book illustration quality with polished finish
+- Characters should be the focal point with clear silhouettes
 
-REQUIREMENTS:
-- Single panel composition, no borders or frames
-- Dramatic and engaging perspective
-- Professional comic book quality
-- Rich colors and dynamic lighting
-- NO text, speech bubbles, or captions
-- NO watermarks or signatures
-- 16:9 landscape aspect ratio
-- High detail and clean linework"""
+COMPOSITION:
+- Single cohesive panel, NO borders or panel frames
+- 16:9 landscape cinematic aspect ratio
+- Rule of thirds composition for visual impact
+- Depth with foreground, midground, background elements
+- Leading lines drawing eye to the action
+
+STRICT RESTRICTIONS:
+- Absolutely NO text, words, letters, or writing of any kind
+- NO speech bubbles or caption boxes
+- NO watermarks, signatures, or logos
+- NO UI elements or borders
+- Characters should NOT be looking directly at camera unless scene requires it"""
         
         return prompt
     
@@ -269,6 +308,137 @@ REQUIREMENTS:
                 
         except Exception as e:
             print(f"⚠ Cleanup failed: {e}")
+    
+    def generate_comic_page(
+        self, 
+        scene_content: str,
+        panel_breakdown: list[dict],
+        scene_id: int,
+        scene_title: str = "The Story Continues",
+        style: str = "western_comic"
+    ) -> Tuple[Optional[str], Optional[str]]:
+        """
+        Generate a full comic page with multiple panels.
+        
+        This is the PAGE MODE - generates a complete comic page layout
+        with multiple panels from a structured panel breakdown.
+        
+        Args:
+            scene_content: The original scene narrative (for context)
+            panel_breakdown: List of panel dicts with visual, action, camera, emotion, dialogue
+            scene_id: Unique scene identifier
+            scene_title: Title for the comic page
+            style: Art style (western_comic, manga, etc.)
+            
+        Returns:
+            Tuple[image_path, image_prompt]: Path to saved image and the prompt used
+        """
+        from utils.comic_prompt_builder import ComicPagePromptBuilder
+        
+        # Initialize the prompt builder
+        builder = ComicPagePromptBuilder(art_style=style)
+        
+        # Build the structured comic page prompt
+        image_prompt = builder.build_from_scene_and_panels(
+            scene_title=scene_title,
+            scene_content=scene_content,
+            panel_breakdown=panel_breakdown,
+            art_style=style,
+            page_number=scene_id
+        )
+        
+        print(f"📄 Generating comic page with {len(panel_breakdown)} panels...")
+        
+        # Try Imagen first (best for multi-panel comics)
+        image_path = self._generate_with_gemini(image_prompt, scene_id)
+        
+        # Fallback to Pollinations if Gemini fails
+        if not image_path:
+            print("⚠ Imagen failed for page mode, trying Pollinations...")
+            image_path = self._generate_with_pollinations(image_prompt, scene_id)
+        
+        return image_path, image_prompt
+    
+    def generate_simple_comic_page(
+        self,
+        scene_content: str,
+        scene_id: int,
+        num_panels: int = 4,
+        style: str = "western_comic"
+    ) -> Tuple[Optional[str], Optional[str]]:
+        """
+        Generate a comic page with a simpler prompt (when panel breakdown unavailable).
+        
+        Uses a simplified prompt that lets the image model decide panel content.
+        
+        Args:
+            scene_content: The scene narrative
+            scene_id: Unique scene identifier
+            num_panels: Number of panels to request
+            style: Art style preference
+            
+        Returns:
+            Tuple[image_path, image_prompt]: Path to saved image and the prompt used
+        """
+        from utils.comic_prompt_builder import ComicPagePromptBuilder
+        
+        builder = ComicPagePromptBuilder(art_style=style)
+        image_prompt = builder.build_simple_prompt(
+            scene_content=scene_content,
+            art_style=style,
+            num_panels=num_panels
+        )
+        
+        print(f"📄 Generating simple {num_panels}-panel comic page...")
+        
+        # Try Imagen first
+        image_path = self._generate_with_gemini(image_prompt, scene_id)
+        
+        if not image_path:
+            print("⚠ Imagen failed, trying Pollinations...")
+            image_path = self._generate_with_pollinations(image_prompt, scene_id)
+        
+        return image_path, image_prompt
+    
+    def generate_cover_page(
+        self,
+        story_title: str,
+        story_theme: str,
+        main_characters: Optional[str] = None,
+        style: str = "western_comic"
+    ) -> Tuple[Optional[str], Optional[str]]:
+        """
+        Generate a comic book cover for the story.
+        
+        Args:
+            story_title: Title of the comic/story
+            story_theme: Brief theme or genre description
+            main_characters: Description of main characters
+            style: Art style preference
+            
+        Returns:
+            Tuple[image_path, image_prompt]: Path to saved image and the prompt used
+        """
+        from utils.comic_prompt_builder import ComicPagePromptBuilder
+        
+        builder = ComicPagePromptBuilder(art_style=style)
+        image_prompt = builder.build_cover_prompt(
+            story_title=story_title,
+            story_theme=story_theme,
+            main_characters=main_characters,
+            art_style=style
+        )
+        
+        print(f"📕 Generating comic cover: {story_title}...")
+        
+        # Try Imagen first
+        image_path = self._generate_with_gemini(image_prompt, 0)
+        
+        if not image_path:
+            print("⚠ Imagen failed for cover, trying Pollinations...")
+            image_path = self._generate_with_pollinations(image_prompt, 0)
+        
+        return image_path, image_prompt
 
 
 # Global service instance
